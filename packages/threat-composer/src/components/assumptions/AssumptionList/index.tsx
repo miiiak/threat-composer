@@ -17,7 +17,6 @@ import Button from '@cloudscape-design/components/button';
 import Container from '@cloudscape-design/components/container';
 import Grid from '@cloudscape-design/components/grid';
 import Header from '@cloudscape-design/components/header';
-import Multiselect from '@cloudscape-design/components/multiselect';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import TextFilter from '@cloudscape-design/components/text-filter';
 import { FC, useCallback, useMemo, useState } from 'react';
@@ -26,10 +25,11 @@ import { useAssumptionsContext } from '../../../contexts/AssumptionsContext/cont
 import { Assumption, AssumptionLink } from '../../../customTypes';
 import { addTagToEntity, removeTagFromEntity } from '../../../utils/entityTag';
 import LinkedEntityFilter, { ALL, WITHOUT_NO_LINKED_ENTITY, WITH_LINKED_ENTITY } from '../../generic/LinkedEntityFilter';
+import TagSelector from '../../generic/TagSelector';
 import AssumptionCard from '../AssumptionCard';
 import AssumptionCreationCard from '../AssumptionCreationCard';
 
-const ThreatStatementList: FC = () => {
+const AssumptionList: FC = () => {
   const {
     assumptionList,
     removeAssumption,
@@ -39,6 +39,7 @@ const ThreatStatementList: FC = () => {
   const {
     assumptionLinkList,
     addAssumptionLinks,
+    removeAssumptionLinksByAssumptionId,
   } = useAssumptionLinksContext();
 
   const [filteringText, setFilteringText] = useState('');
@@ -67,6 +68,11 @@ const ThreatStatementList: FC = () => {
     const updated = removeTagFromEntity(assumption, tag);
     saveAssumption(updated as Assumption);
   }, []);
+
+  const handleRemove = useCallback(async (assumptionId: string) => {
+    removeAssumption(assumptionId);
+    await removeAssumptionLinksByAssumptionId(assumptionId);
+  }, [removeAssumption, removeAssumptionLinksByAssumptionId]);
 
   const filteredList = useMemo(() => {
     let output = assumptionList;
@@ -174,22 +180,10 @@ const ThreatStatementList: FC = () => {
               { colspan: { default: 1 } },
             ]}
           >
-            <Multiselect
-              tokenLimit={0}
-              selectedOptions={selectedTags.map(ia => ({
-                label: ia,
-                value: ia,
-              }))}
-              onChange={({ detail }) =>
-                setSelectedTags(detail.selectedOptions?.map(o => o.value || '') || [])
-              }
-              deselectAriaLabel={e => `Remove ${e.label}`}
-              options={allTags.map(g => ({
-                label: g,
-                value: g,
-              }))}
-              placeholder="Filtered by tags"
-              selectedAriaLabel="Selected"
+            <TagSelector
+              allTags={allTags}
+              selectedTags={selectedTags}
+              setSelectedTags={setSelectedTags}
             />
             <LinkedEntityFilter
               label='Linked threats'
@@ -222,7 +216,7 @@ const ThreatStatementList: FC = () => {
       {filteredList?.map(entity => (<AssumptionCard
         key={entity.id}
         assumption={entity}
-        onRemove={removeAssumption}
+        onRemove={handleRemove}
         onEdit={saveAssumption}
         onAddTagToAssumption={handleAddTagToEntity}
         onRemoveTagFromAssumption={handleRemoveTagFromEntity}
@@ -234,4 +228,4 @@ const ThreatStatementList: FC = () => {
   </div>);
 };
 
-export default ThreatStatementList;
+export default AssumptionList;

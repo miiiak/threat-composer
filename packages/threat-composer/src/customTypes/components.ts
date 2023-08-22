@@ -13,8 +13,6 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  ******************************************************************************************************************** */
-const parseTableCellContent = (str: string) => {
-  return str.replace('|', '&#124;').replace('\n\n', '<br/>');
-};
-
-export default parseTableCellContent;
+export interface EditableComponentBaseProps {
+  onEditModeChange?: (editMode: boolean) => void;
+}

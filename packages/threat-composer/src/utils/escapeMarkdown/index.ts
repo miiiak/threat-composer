@@ -13,16 +13,27 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  ******************************************************************************************************************** */
-export * from './assumptions';
-export * from './mitigations';
-export * from './threats';
-export * from './threatFieldTypes';
-export * from './workspaces';
-export * from './entities';
-export * from './composerMode';
-export * from './application';
-export * from './architecture';
-export * from './dataflow';
-export * from './dataExchange';
-export * from './events';
-export * from './components';
+const replacements = [
+  [/\*/g, '\\*', 'asterisks'],
+  [/#/g, '\\#', 'number signs'],
+  [/\//g, '\\/', 'slashes'],
+  [/\(/g, '\\(', 'parentheses'],
+  [/\)/g, '\\)', 'parentheses'],
+  [/\[/g, '\\[', 'square brackets'],
+  [/\]/g, '\\]', 'square brackets'],
+  [/</g, '&lt;', 'angle brackets'],
+  [/>/g, '&gt;', 'angle brackets'],
+  [/_/g, '\\_', 'underscores'],
+  [/`/g, '\\`', 'codeblocks'],
+];
+
+const escapeMarkdown = (input: string, skips: string[] = []) => {
+  return replacements.reduce((str, replacement) => {
+    var name = replacement[2] as string;
+    return skips.indexOf(name) !== -1
+      ? str
+      : str.replace(replacement[0], replacement[1] as string);
+  }, input);
+};
+
+export default escapeMarkdown;

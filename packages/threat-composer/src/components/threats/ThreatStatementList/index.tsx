@@ -30,8 +30,10 @@ import { useThreatsContext } from '../../../contexts/ThreatsContext/context';
 import { TemplateThreatStatement, ThreatStatementListFilter } from '../../../customTypes';
 import useEditMetadata from '../../../hooks/useEditMetadata';
 import { addTagToEntity, removeTagFromEntity } from '../../../utils/entityTag';
+import AssetSelector from '../../generic/AssetSelector';
 import LinkedEntityFilter, { ALL, WITHOUT_NO_LINKED_ENTITY, WITH_LINKED_ENTITY } from '../../generic/LinkedEntityFilter';
 import { OPTIONS as STRIDEOptions } from '../../generic/STRIDESelector';
+import TagSelector from '../../generic/TagSelector';
 import WorkspaceSelector from '../../workspaces/WorkspaceSelector';
 import SortByComponent, { SortByOption, DEFAULT_SORT_BY } from '../SortBy';
 import ThreatStatementCard from '../ThreatStatementCard';
@@ -78,16 +80,24 @@ const ThreatStatementList: FC<ThreatStatementListProps> = ({
 
   const {
     assumptionLinkList,
+    removeAssumptionLinksByLinkedEntityId,
   } = useAssumptionLinksContext();
 
   const {
     mitigationLinkList,
+    removeMitigationLinksByLinkedEntityId,
   } = useMitigationLinksContext();
 
   const {
     showInfoModal,
     composerMode,
   } = useGlobalSetupContext();
+
+  const handleRemove = useCallback(async (statementId: string) => {
+    removeStatement(statementId);
+    await removeAssumptionLinksByLinkedEntityId(statementId);
+    await removeMitigationLinksByLinkedEntityId(statementId);
+  }, [removeStatement, removeAssumptionLinksByLinkedEntityId, removeMitigationLinksByLinkedEntityId]);
 
   const [filteringText, setFilteringText] = useState('');
   const [sortBy, setSortBy] = useState<SortByOption>(DEFAULT_SORT_BY);
@@ -384,22 +394,10 @@ const ThreatStatementList: FC<ThreatStatementListProps> = ({
               placeholder="Filtered by STRIDE"
               selectedAriaLabel="Selected"
             />
-            <Multiselect
-              tokenLimit={0}
-              selectedOptions={selectedImpactedAssets.map(ia => ({
-                label: ia,
-                value: ia,
-              }))}
-              onChange={({ detail }) =>
-                setSelectedImpactedAssets(detail.selectedOptions?.map(o => o.value || '') || [])
-              }
-              deselectAriaLabel={e => `Remove ${e.label}`}
-              options={allImpactedAssets.map(g => ({
-                label: g,
-                value: g,
-              }))}
-              placeholder="Filtered by impacted assets"
-              selectedAriaLabel="Selected"
+            <AssetSelector
+              allAssets={allImpactedAssets}
+              selectedAssets={selectedImpactedAssets}
+              setSelectedAssets={setSelectedImpactedAssets}
             />
             <Multiselect
               tokenLimit={0}
@@ -418,22 +416,10 @@ const ThreatStatementList: FC<ThreatStatementListProps> = ({
               placeholder="Filtered by impacted goal"
               selectedAriaLabel="Selected"
             />
-            <Multiselect
-              tokenLimit={0}
-              selectedOptions={selectedTags.map(ia => ({
-                label: ia,
-                value: ia,
-              }))}
-              onChange={({ detail }) =>
-                setSelectedTags(detail.selectedOptions?.map(o => o.value || '') || [])
-              }
-              deselectAriaLabel={e => `Remove ${e.label}`}
-              options={allTags.map(g => ({
-                label: g,
-                value: g,
-              }))}
-              placeholder="Filtered by tags"
-              selectedAriaLabel="Selected"
+            <TagSelector
+              allTags={allTags}
+              selectedTags={selectedTags}
+              setSelectedTags={setSelectedTags}
             />
             {composerMode === 'Full' && <LinkedEntityFilter
               label='Linked mitigations'
@@ -478,7 +464,7 @@ const ThreatStatementList: FC<ThreatStatementListProps> = ({
         key={st.id}
         statement={st}
         onCopy={handleAddStatement}
-        onRemove={removeStatement}
+        onRemove={handleRemove}
         onEditInWizard={handleEditStatement}
         onEditMetadata={handleEditMetadata}
         onAddTagToStatement={handleAddTagToStatement}
